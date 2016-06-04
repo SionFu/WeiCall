@@ -56,7 +56,7 @@ class FDXMPPTool: NSObject,XMPPStreamDelegate {
     var xmpprosterStore : XMPPRosterCoreDataStorage!
     //增加消息模块 和对应的存储
     var xmppMsgArch : XMPPMessageArchiving!
-    var xmppMsgArchStore : XMPPMessageArchivingStorage!
+    var xmppMsgArchStore : XMPPMessageArchivingCoreDataStorage!
     
     
     class func getSharedInstance() -> FDXMPPTool{

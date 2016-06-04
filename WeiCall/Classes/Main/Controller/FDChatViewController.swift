@@ -22,11 +22,32 @@ class FDChatViewController: UIViewController ,NSFetchedResultsControllerDelegate
         imagePicker.editing = true
         self.presentViewController(imagePicker, animated: true, completion: nil)
     }
+    // 选择图片
     func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
-        let image = info[UIImagePickerControllerOriginalImage]
-        var orgeimage = image as?UIImage
+        let  image  = info[UIImagePickerControllerOriginalImage]
+        let oriImage = image as? UIImage
+        print(UIImagePNGRepresentation(oriImage!)?.length)
+        let newImage = thumbnailWithImage(oriImage!, size: CGSize(width: 100, height: 100))
+        print(UIImagePNGRepresentation(newImage!)?.length)
+        let sendData = UIImageJPEGRepresentation(newImage!, 0.05)
+        print(sendData?.length)
         dismissViewControllerAnimated(true, completion: nil)
+        
     }
+    // 压缩图片
+    func thumbnailWithImage(image : UIImage, size : CGSize) -> UIImage?{
+        var newImage : UIImage? = nil;
+        if newImage == nil {
+            UIGraphicsBeginImageContext(size);
+            //    [image drawInRect:CGRectMake(0, 0, size.width, size.height)];
+            image.drawInRect(CGRect(x: 0, y: 0, width: size.width, height: size.height))
+            newImage = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+        }
+        return newImage;
+    }
+
+    
     @IBOutlet weak var msgField: UITextField!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var heightForBottom: NSLayoutConstraint!
@@ -49,7 +70,7 @@ class FDChatViewController: UIViewController ,NSFetchedResultsControllerDelegate
         let request = NSFetchRequest(entityName: "XMPPMessageArchiving_Message_CoreDataObject")
         //设置谓词
         let jidStr = FDUserInfo.getSharedInstance().userName! + "@" + XMPPDOMAIN
-        let pre = NSPredicate(format: "streamBareJidStr = %@ and bareJid = %@", jidStr,self.fjid.bare())
+        let pre = NSPredicate(format: "streamBareJidStr = %@ and bareJidStr = %@", jidStr,self.fjid.bare())
         request.predicate = pre
         //设置排序
         let sort = NSSortDescriptor(key: "timestamp", ascending: true)
@@ -64,11 +85,32 @@ class FDChatViewController: UIViewController ,NSFetchedResultsControllerDelegate
         }
         
     }
+    func  loadMsg1(){
+        // 获取上下文
+        let  context = FDXMPPTool.getSharedInstance().xmppMsgArchStore.mainThreadManagedObjectContext
+        // 关联实体
+        let  request = NSFetchRequest(entityName: "XMPPMessageArchiving_Message_CoreDataObject")
+        // 设置谓词
+        let jidStr = FDUserInfo.getSharedInstance().userName! + "@" + XMPPDOMAIN
+        let pre = NSPredicate(format: "streamBareJidStr = %@ and bareJidStr = %@", jidStr,self.fjid.bare())
+        request.predicate = pre
+        // 设置排序
+        let sort = NSSortDescriptor(key: "timestamp", ascending: true)
+        request.sortDescriptors = [sort]
+        // 获取数据
+        self.fetchController = NSFetchedResultsController(fetchRequest: request, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
+        fetchController.delegate = self
+        do {
+            try self.fetchController.performFetch()
+        }catch {
+            print("获取聊天消息 出错!")
+        }
+    }
     override func viewDidLoad() {
         super.viewDidLoad()
-//        print(fjid.description)
+        print(fjid.description)
         // Do any additional setup after loading the view.
-//        loadMsg()
+        loadMsg1()
         self.tableView.delegate = self;
         self.tableView.dataSource = self;
     }
